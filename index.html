@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>📁 Agenda de Links</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    header {
+      background-color: #2a9d8f;
+      padding: 1.2rem;
+      text-align: center;
+      color: white;
+      font-size: 1.6rem;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    #formulario {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 1rem;
+    }
+
+    #formulario input, #formulario select {
+      padding: 0.8rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 260px;
+    }
+
+    #btnGuardar {
+      background-color: #2a9d8f;
+      color: white;
+      border: none;
+      font-size: 1rem;
+      padding: 0.8rem 1.4rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #btnGuardar:hover {
+      background-color: #21867a;
+    }
+
+    #categoriaPersonalizada {
+      display: none;
+      width: 100%;
+      max-width: 270px;
+    }
+
+    #busqueda {
+      text-align: center;
+      padding: 1rem;
+    }
+
+    #buscar {
+      width: 100%;
+      max-width: 500px;
+      padding: 0.9rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 1.4rem;
+    }
+
+    .album {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.2rem;
+      padding: 1rem;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+      transform: scale(1.02);
+    }
+
+    .thumbnail {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      background: #eee;
+    }
+
+    .card-content {
+      padding: 0.9rem;
+    }
+
+    .card-content h3 {
+      font-size: 1rem;
+      margin: 0;
+      color: #0077cc;
+      word-break: break-word;
+    }
+
+    .card-content p {
+      font-size: 0.85rem;
+      margin: 0.3rem 0;
+      color: #444;
+    }
+
+    .botones {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.3rem;
+      margin-top: 0.7rem;
+    }
+
+    .botones button {
+      flex: 1;
+      padding: 0.5rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      background: #e1f5f2;
+      cursor: pointer;
+    }
+
+    .botones button:hover {
+      background: #c4e9e4;
+    }
+  </style>
+</head>
+<body>
+
+  <header>📁 Agenda de Links</header>
+
+  <section id="formulario">
+    <input type="url" id="link" placeholder="🔗 Enlace" required />
+
+    <select id="categoriaSelect" onchange="mostrarPersonalizada()">
+      <option value="Entretenimiento">🎬 Entretenimiento</option>
+      <option value="Educación">📚 Educación</option>
+      <option value="Trabajo">💼 Trabajo</option>
+      <option value="Programación">🧑‍💻 Programación</option>
+      <option value="Compras">🛒 Compras</option>
+      <option value="Redes Sociales">💬 Redes Sociales</option>
+      <option value="Noticias">🗞️ Noticias</option>
+      <option value="Inspiración">💡 Inspiración</option>
+      <option value="Bienestar">🧘 Bienestar</option>
+      <option value="Otros">🗂️ Otros / Personalizado...</option>
+    </select>
+
+    <input type="text" id="categoriaInput" placeholder="✏️ Escribe tu categoría personalizada" style="display:none;" />
+
+    <button id="btnGuardar" onclick="guardarLink()">💾 Guardar</button>
+  </section>
+
+  <section id="busqueda">
+    <input type="text" id="buscar" placeholder="🔍 Buscar..." onkeyup="filtrarLinks()" />
+  </section>
+
+  <h2>📸 Enlaces Guardados</h2>
+  <div id="links" class="album"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', mostrarLinks);
+
+    function mostrarPersonalizada() {
+      const select = document.getElementById('categoriaSelect');
+      const personalizada = document.getElementById('categoriaInput');
+      personalizada.style.display = select.value === 'Otros' ? 'block' : 'none';
+    }
+
+    async function guardarLink() {
+      const url = document.getElementById('link').value.trim();
+      const select = document.getElementById('categoriaSelect');
+      const personalizada = document.getElementById('categoriaInput').value.trim();
+      const categoria = select.value === 'Otros' ? (personalizada || 'Otros') : select.value;
+      const boton = document.getElementById('btnGuardar');
+
+      if (!url) return alert("Ingresa un enlace válido.");
+
+      const lista = JSON.parse(localStorage.getItem('linksGuardados')) || [];
+      if (lista.some(link => link.enlace === url)) {
+        alert("⚠️ Este enlace ya fue guardado.");
+        return;
+      }
+
+      boton.disabled = true;
+      boton.innerText = "Guardando...";
+
+      const data = await obtenerMicrolink(url);
+      if (!data) {
+        alert("No se pudo obtener vista previa.");
+        boton.disabled = false;
+        boton.innerText = "💾 Guardar";
+        return;
+      }
+
+      lista.push({
+        enlace: url,
+        titulo: data.title || url,
+        imagen: data.image?.url || 'https://via.placeholder.com/300x180?text=Vista+no+disponible',
+        categoria,
+        favorito: false,
+        fecha: new Date().toLocaleDateString()
+      });
+
+      localStorage.setItem('linksGuardados', JSON.stringify(lista));
+      document.getElementById('link').value = '';
+      document.getElementById('categoriaInput').value = '';
+      boton.disabled = false;
+      boton.innerText = "💾 Guardar";
+
+      mostrarConfirmacion();
+      mostrarLinks();
+    }
+
+    async function obtenerMicrolink(url) {
+      try {
+        const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}`);
+        const json = await res.json();
+        return json.status === 'success' ? json.data : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function mostrarLinks() {
+      const lista = JSON.parse(localStorage.getItem('linksGuardados')) || [];
+      const contenedor = document.getElementById('links');
+      contenedor.innerHTML = '';
+
+      lista.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        card.innerHTML = `
+          <img class="thumbnail" src="${item.imagen}" alt="miniatura" onerror="this.src='https://via.placeholder.com/300x180?text=No+preview'">
+          <div class="card-content">
+            <h3><a href="${item.enlace}" target="_blank">${item.titulo}</a></h3>
+            <p>${item.categoria} | ${item.fecha}</p>
+            <div class="botones">
+              <button onclick="toggleFavorito(${index})">${item.favorito ? '⭐' : '☆'}</button>
+              <button onclick="compartirLink('${item.enlace}')">📤</button>
+              <button onclick="eliminarLink(${index})">🗑️</button>
+            </div>
+          </div>
+        `;
+        contenedor.appendChild(card);
+      });
+    }
+
+    function toggleFavorito(index) {
+      const lista = JSON.parse(localStorage.getItem('linksGuardados')) || [];
+      lista[index].favorito = !lista[index].favorito;
+      localStorage.setItem('linksGuardados', JSON.stringify(lista));
+      mostrarLinks();
+    }
+
+    function eliminarLink(index) {
+      const lista = JSON.parse(localStorage.getItem('linksGuardados')) || [];
+      lista.splice(index, 1);
+      localStorage.setItem('linksGuardados', JSON.stringify(lista));
+      mostrarLinks();
+    }
+
+    function compartirLink(enlace) {
+      const mensaje = `Mira este enlace: ${enlace}`;
+      const whatsapp = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+      const mail = `mailto:?subject=Te comparto un link&body=${encodeURIComponent(mensaje)}`;
+      const usarWhatsapp = confirm("¿Compartir por WhatsApp?\n(Cancelar usa correo)");
+      window.open(usarWhatsapp ? whatsapp : mail, "_blank");
+    }
+
+    function filtrarLinks() {
+      const texto = document.getElementById('buscar').value.toLowerCase();
+      const tarjetas = document.querySelectorAll('.card');
+      tarjetas.forEach(card => {
+        const contenido = card.textContent.toLowerCase();
+        card.style.display = contenido.includes(texto) ? 'block' : 'none';
+      });
+    }
+
+    function mostrarConfirmacion() {
+      const msg = document.createElement('div');
+      msg.innerText = "✅ Enlace guardado";
+      Object.assign(msg.style, {
+        position: "fixed", top: "20px", right: "20px", background: "#2a9d8f",
+        color: "white", padding: "10px 20px", borderRadius: "8px", zIndex: "9999"
+      });
+      document.body.appendChild(msg);
+      setTimeout(() => msg.remove(), 2000);
+    }
+  </script>
+
+</body>
+</html>
